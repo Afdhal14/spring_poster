@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Motivational Poster</title>
+
+  <!-- Import Allura font -->
+  <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --accent: #6200ea; /* New button color (purple) */
+      --text-light: #ffffff;
+      --text-soft: #dddddd;
+      --bg-dark: #121212;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      min-height: 100vh;
+      font-family: 'Georgia', serif;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .poster-container {
+      position: relative;
+      width: 480px;
+      height: 640px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      background-color: #111;
+    }
+
+    .poster-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.9);
+    }
+
+    .quote-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+      color: var(--text-light);
+    }
+
+    .quote {
+      font-family: 'Allura', cursive;
+      font-size: 2.4rem;
+      line-height: 1.5;
+      font-weight: 400;
+      margin-bottom: 20px;
+    }
+
+    .author {
+      font-family: 'Allura', cursive;
+      font-size: 1.8rem;
+      color: var(--text-soft);
+    }
+
+    .generate-btn {
+      margin-top: 20px;
+      background: var(--accent);
+      color: white;
+      padding: 14px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(98, 0, 234, 0.4);
+      transition: all 0.35s ease;
+      transform: translateY(0);
+    }
+
+    .generate-btn:hover {
+      background: #7c4dff;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 10px 25px rgba(124, 77, 255, 0.6);
+    }
+
+    @media (max-width: 768px) {
+      .poster-container {
+        width: 90vw;
+        height: auto;
+        aspect-ratio: 3 / 4;
+      }
+
+      .quote {
+        font-size: 1.8rem;
+      }
+
+      .author {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="poster-container">
+  <img id="bgImage" class="poster-img" alt="Poster Background" />
+  <div class="quote-overlay">
+    <div id="quote" class="quote">Loading...</div>
+    <div id="author" class="author"></div>
+  </div>
+</div>
+
+<button class="generate-btn" onclick="generatePoster()">✨ Generate New Poster</button>
+
+<script>
+  function getFontSize(text) {
+    const len = text.length;
+    if (len < 100) return '2.4rem';
+    if (len < 180) return '2rem';
+    if (len < 250) return '1.7rem';
+    return '1.5rem';
+  }
+
+  async function generatePoster() {
+    try {
+      const [imageRes, quoteRes] = await Promise.all([
+        fetch("/generate"),
+        fetch("/quote")
+      ]);
+
+      const imageBlob = await imageRes.blob();
+      const imageUrl = URL.createObjectURL(imageBlob);
+      document.getElementById("bgImage").src = imageUrl;
+
+      const quoteData = await quoteRes.json();
+      const quoteText = quoteData.q || "Stay focused.";
+      const authorText = quoteData.a || "Unknown";
+
+      const quoteEl = document.getElementById("quote");
+      const authorEl = document.getElementById("author");
+
+      quoteEl.textContent = `"${quoteText}"`;
+      quoteEl.style.fontSize = getFontSize(quoteText);
+      authorEl.textContent = `– ${authorText}`;
+    } catch (err) {
+      document.getElementById("quote").textContent = "Failed to load.";
+      document.getElementById("author").textContent = "";
+    }
+  }
+
+  generatePoster();
+</script>
+
+</body>
+</html>
