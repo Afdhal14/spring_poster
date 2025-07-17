@@ -4,12 +4,14 @@
   <meta charset="UTF-8" />
   <title>Motivational Poster</title>
 
-  <!-- Import Allura font -->
+  <!-- Allura font -->
   <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap" rel="stylesheet">
+  <!-- html2canvas for capturing the poster -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
     :root {
-      --accent: #6200ea; /* New button color (purple) */
+      --accent: #6200ea;
       --text-light: #ffffff;
       --text-soft: #dddddd;
       --bg-dark: #121212;
@@ -119,7 +121,7 @@
 </head>
 <body>
 
-<div class="poster-container">
+<div class="poster-container" id="poster">
   <img id="bgImage" class="poster-img" alt="Poster Background" />
   <div class="quote-overlay">
     <div id="quote" class="quote">Loading...</div>
@@ -141,13 +143,14 @@
   async function generatePoster() {
     try {
       const [imageRes, quoteRes] = await Promise.all([
-        fetch("/generate"),
-        fetch("/quote")
+        fetch("/generate"),  // replace with your actual image API
+        fetch("/quote")      // replace with your actual quote API
       ]);
 
       const imageBlob = await imageRes.blob();
       const imageUrl = URL.createObjectURL(imageBlob);
-      document.getElementById("bgImage").src = imageUrl;
+      const bgImage = document.getElementById("bgImage");
+      bgImage.src = imageUrl;
 
       const quoteData = await quoteRes.json();
       const quoteText = quoteData.q || "Stay focused.";
@@ -159,12 +162,37 @@
       quoteEl.textContent = `"${quoteText}"`;
       quoteEl.style.fontSize = getFontSize(quoteText);
       authorEl.textContent = `– ${authorText}`;
+
+      bgImage.onload = async () => {
+        const posterEl = document.getElementById("poster");
+
+        // Capture the div as image using html2canvas
+        const canvas = await html2canvas(posterEl);
+        canvas.toBlob(async (blob) => {
+          const formData = new FormData();
+          formData.append("poster", blob, "poster.png");
+
+          const res = await fetch("/upload-poster", {
+            method: "POST",
+            body: formData
+          });
+
+          if (res.ok) {
+            console.log("Poster uploaded successfully.");
+          } else {
+            console.error("Failed to upload.");
+          }
+        }, "image/png");
+      };
+
     } catch (err) {
+      console.error(err);
       document.getElementById("quote").textContent = "Failed to load.";
       document.getElementById("author").textContent = "";
     }
   }
 
+  // Auto-generate on load
   generatePoster();
 </script>
 
